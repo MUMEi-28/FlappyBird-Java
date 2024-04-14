@@ -72,6 +72,8 @@ public class FlappyBird extends JPanel implements  ActionListener, KeyListener
     Timer gameLoop;
     Timer placePipeTimer;
 
+    boolean isGameOver = false;
+
     FlappyBird()
     {
         setPreferredSize(new Dimension(boardWidth, boardHeight));
@@ -107,10 +109,16 @@ public class FlappyBird extends JPanel implements  ActionListener, KeyListener
     public  void placePipes()
     {
         int randomPipeY = (int)(pipeY - pipeHeight / 4 - Math.random() * (pipeHeight/2));
+        int openingSpace = boardHeight / 4;
 
         Pipe topPipe = new Pipe(topPipeImg);
         topPipe.y = randomPipeY;
         pipes.add(topPipe);
+
+        Pipe bottomPipe = new Pipe(botPipeImg);
+        bottomPipe.y = topPipe.y + pipeHeight + openingSpace;
+        pipes.add(bottomPipe);
+
     }
 
     public void paintComponent(Graphics g)
@@ -142,9 +150,26 @@ public class FlappyBird extends JPanel implements  ActionListener, KeyListener
         {
             Pipe pipe = pipes.get(i);
             pipe.x += velocityX;
+
+            if(collision(bird, pipe))
+            {
+                isGameOver = true;
+            }
+        }
+
+        if(bird.y > boardHeight) // If the bird falls below screen
+        {
+            isGameOver = true;
         }
     }
 
+    public  boolean collision(Bird a, Pipe b)
+    {
+        return  a.x < b.x + b.width &&  // a's top left corner doesn't reach b's top right corner
+                a.x + a.width > b.x &&  // a's top right corner doesn't passes b's top left corner
+                a.y < b.y + b.height && // a's top left corner doesn't reach b's bottom left corner
+                a.y + a.height > b.y;   // a's bottom left corner doesn't passes b's top left corner
+    }
     @Override
     public void actionPerformed(ActionEvent e)
     {
@@ -152,7 +177,14 @@ public class FlappyBird extends JPanel implements  ActionListener, KeyListener
 
         // Every 16 mili second repaint
         repaint();
+
+        if(isGameOver)
+        {
+            placePipeTimer.stop();
+            gameLoop.stop();
+        }
     }
+
     @Override
     public void keyTyped(KeyEvent e)
     {
